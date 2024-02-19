@@ -170,96 +170,109 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.5.0/web3.min.js"
         integrity="sha512-FhAl50BpK3gf9K//lbAWek9EEQEtGQyyXZNc1fuwcC2tVf2cskiJBcumXY0zJksYtms6S5cqubp1MNfUYTkO2A=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-        // Event listener for deposit button click
-        document.getElementById('depositButton').addEventListener('click', async () => {
-            // Disable the button to prevent multiple clicks
-            document.getElementById('depositButton').disabled = true;
-            const solanaAddress = document.getElementById('solanaAddress').value;
-            const amount = parseFloat(document.getElementById('amount').value); // Get the amount in ether
-            const fee = document.getElementById('fee').value;
-            // Clear previous error and result messages
-            document.getElementById('error').innerText = '';
-            document.getElementById('result').innerText = '';
-            // Validate inputs
-            if (!solanaAddress || !amount || !fee) {
-                document.getElementById('error').innerText = 'Please fill in all fields.';
-                // Re-enable the button
-                document.getElementById('depositButton').disabled = false;
-                return;
+        <script>
+            // Function to detect the user's current network chain ID
+            async function detectChainId() {
+                const chainId = await window.ethereum.request({ method: "eth_chainId" });
+                return chainId;
             }
-            // Display loading indicator
-            document.getElementById('loading').style.display = 'block';
-            // Process deposit
-            const abi = [{
-                "constant": false,
-                "inputs": [{
-                    "name": "",
-                    "type": "bytes32"
-                }, {
-                    "name": "",
-                    "type": "uint256"
-                }, {
-                    "name": "",
-                    "type": "uint256"
-                }],
-                "name": "deposit",
-                "outputs": [],
-                "payable": true,
-                "stateMutability": "payable",
-                "type": "function"
-            }];
-            const etherBridgeContractAddress = "0x7C9e161ebe55000a3220F972058Fb83273653a6e"; // EtherBridge contract address
-            const hexSolanaAddress = '0x' + decodeBase58(solanaAddress);
-            const provider = window.ethereum;
-            const web3 = new Web3(provider);
-            const contract = new web3.eth.Contract(abi, etherBridgeContractAddress);
-            try {
-                // Request account access
-                await window.ethereum.request({
-                    method: 'eth_requestAccounts'
-                });
-                // Get the connected account
-                const accounts = await web3.eth.getAccounts();
-                const from = accounts[0];
-                const amountWei = web3.utils.toWei(amount.toString(), 'ether'); // Convert ether to Wei
-                const feeWei = web3.utils.toWei(fee, 'gwei');
-                const totalWei = (BigInt(amountWei) + BigInt(feeWei)).toString();
-                // Send transaction
-                const tx = await contract.methods.deposit(hexSolanaAddress, amountWei, feeWei).send({
-                    from: from,
-                    value: totalWei
-                });
-                document.getElementById('result').innerHTML = `
-                       
-         								<p>Transaction successful! Transaction hash: 
-         									<a href="https://sepolia.etherscan.io/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>
-         								</p>
-                   `;
-            } catch (error) {
-                document.getElementById('error').innerText = `Transaction failed: ${error.message}`;
-            } finally {
-                // Hide loading indicator
-                document.getElementById('loading').style.display = 'none';
-                // Re-enable the button
-                document.getElementById('depositButton').disabled = false;
+        
+            // Event listener for deposit button click
+            document.getElementById('depositButton').addEventListener('click', async () => {
+                // Check if the current network is Ethereum Sepolia Testnet
+                const currentChainId = await detectChainId();
+                if (currentChainId !== '0xaa36a7') { // Chain ID for Sepolia test network
+                    alert("Please switch to Ethereum Sepolia Testnet network to proceed with the deposit.");
+                    return;
+                }
+        
+                // Disable the button to prevent multiple clicks
+                document.getElementById('depositButton').disabled = true;
+                const solanaAddress = document.getElementById('solanaAddress').value;
+                const amount = parseFloat(document.getElementById('amount').value); // Get the amount in ether
+                const fee = document.getElementById('fee').value;
+                // Clear previous error and result messages
+                document.getElementById('error').innerText = '';
+                document.getElementById('result').innerText = '';
+                // Validate inputs
+                if (!solanaAddress || !amount || !fee) {
+                    document.getElementById('error').innerText = 'Please fill in all fields.';
+                    // Re-enable the button
+                    document.getElementById('depositButton').disabled = false;
+                    return;
+                }
+                // Display loading indicator
+                document.getElementById('loading').style.display = 'block';
+                // Process deposit
+                const abi = [{
+                    "constant": false,
+                    "inputs": [{
+                        "name": "",
+                        "type": "bytes32"
+                    }, {
+                        "name": "",
+                        "type": "uint256"
+                    }, {
+                        "name": "",
+                        "type": "uint256"
+                    }],
+                    "name": "deposit",
+                    "outputs": [],
+                    "payable": true,
+                    "stateMutability": "payable",
+                    "type": "function"
+                }];
+                const etherBridgeContractAddress = "0x7C9e161ebe55000a3220F972058Fb83273653a6e"; // EtherBridge contract address
+                const hexSolanaAddress = '0x' + decodeBase58(solanaAddress);
+                const web3 = new Web3(window.ethereum);
+                const contract = new web3.eth.Contract(abi, etherBridgeContractAddress);
+                try {
+                    // Request account access
+                    await window.ethereum.request({
+                        method: 'eth_requestAccounts'
+                    });
+                    // Get the connected account
+                    const accounts = await web3.eth.getAccounts();
+                    const from = accounts[0];
+                    const amountWei = web3.utils.toWei(amount.toString(), 'ether'); // Convert ether to Wei
+                    const feeWei = web3.utils.toWei(fee, 'gwei');
+                    const totalWei = (BigInt(amountWei) + BigInt(feeWei)).toString();
+                    // Send transaction
+                    const tx = await contract.methods.deposit(hexSolanaAddress, amountWei, feeWei).send({
+                        from: from,
+                        value: totalWei
+                    });
+                    document.getElementById('result').innerHTML = `
+                        <p>Transaction successful! Transaction hash: 
+                            <a href="https://sepolia.etherscan.io/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>
+                        </p>
+                    `;
+                } catch (error) {
+                    document.getElementById('error').innerText = `Transaction failed: ${error.message}`;
+                } finally {
+                    // Hide loading indicator
+                    document.getElementById('loading').style.display = 'none';
+                    // Re-enable the button
+                    document.getElementById('depositButton').disabled = false;
+                }
+            });
+        
+            // Function to decode base58 string
+            function decodeBase58(base58String) {
+                const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+                let decoded = BigInt(0);
+                for (let i = 0; i < base58String.length; i++) {
+                    decoded *= BigInt(58);
+                    decoded += BigInt(ALPHABET.indexOf(base58String[i]));
+                }
+                let hexString = decoded.toString(16);
+                if (hexString.length % 2 !== 0) {
+                    hexString = '0' + hexString;
+                }
+                return hexString;
             }
-        });
-        // Function to decode base58 string
-        function decodeBase58(base58String) {
-            const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-            let decoded = BigInt(0);
-            for (let i = 0; i < base58String.length; i++) {
-                decoded *= BigInt(58);
-                decoded += BigInt(ALPHABET.indexOf(base58String[i]));
-            }
-            let hexString = decoded.toString(16);
-            if (hexString.length % 2 !== 0) {
-                hexString = '0' + hexString;
-            }
-            return hexString;
-        }
-    </script>
+        </script>
+        
 </body>
 
 </html>
