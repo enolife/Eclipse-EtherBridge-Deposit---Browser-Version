@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png"
+        href="https://assets-global.website-files.com/637f3d9a749a77ee72b0e1ad/63979eeab5ebe962653e27fb_favicon.png">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+    <title>Eclipse EtherBridge Deposit</title>
+    <!-- CSS Styles -->
+    <style>
+        body {
+            font-family: "Roboto Slab", serif;
+            font-optical-sizing: auto;
+            font-style: normal;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f5f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            /* Ensure the navbar is on top of other content */
+        }
+
+        .navbar-logo {
+            max-width: 100px;
+            /* Adjust size as needed */
+            height: auto;
+        }
+
+        .container {
+            border: 1px solid #282825;
+            background-color: #ffffff;
+            box-shadow: 3px 6px 0 0 #282825;
+            border-radius: 20px;
+            margin: 5rem 0.7rem auto;
+            padding: 10px 40px 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #282825;
+            font-family: "VT323", monospace;
+            font-weight: 400;
+            font-size: 2.5rem;
+            margin-bottom: 37px;
+        }
+
+        input {
+            background-color: #f9f5f238;
+            border: 1px solid #282825;
+            box-shadow: 3px 3px 0 0 #282825;
+            border-radius: 20px;
+            transition: box-shadow .25s cubic-bezier(.645, .045, .355, 1);
+        }
+
+        input:hover {
+            box-shadow: 5px 5px 0 0 #282825;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        button {
+            margin-top: 1rem;
+            height: 45px;
+            border: 2px solid #282825;
+            box-shadow: 3px 3px 0 0 #282825;
+            color: #282825;
+            letter-spacing: .5px;
+            background-color: #f7cb45;
+            border-radius: 12px;
+            padding: 0 32px;
+            font-family: "Unigeo 32", Arial, sans-serif;
+            font-weight: 600;
+            text-decoration: none;
+            transition: box-shadow .25s cubic-bezier(.645, .045, .355, 1), transform .25s cubic-bezier(.645, .045, .355, 1);
+            display: inline-block;
+        }
+
+        button:hover {
+            box-shadow: 6px 6px 0 0 #282825;
+            transform: translate(-4px, -4px);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .result,
+        .error,
+        .loading {
+            margin: 20px auto 0;
+            font-weight: bold;
+            font-size: calc(0.64rem + ((1vw - 0.78rem) * 0.2778));
+            width: 80%;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .error {
+            color: #ff3333;
+            margin-top: 10px;
+        }
+
+        .loading {
+            color: #ff9000;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <!-- Logo -->
+        <img src="https://crypto-fundraising.info/wp-content/uploads/funds/2023/02/Eclipse.png" alt="Logo"
+            class="navbar-logo">
+    </nav>
+    <div class="container">
+        <h1>EtherBridge Deposit</h1>
+        <label for="solanaAddress">Solana Address:</label>
+        <input type="text" id="solanaAddress" placeholder="Enter Solana Address">
+        <label for="amount">Ether Amount:</label>
+        <input type="text" id="amount" placeholder="Enter Amount in Gwei">
+        <label for="fee">Fee in Gwei:</label>
+        <input type="text" id="fee" placeholder="Enter Fee in Gwei">
+        <button id="depositButton">Deposit</button>
+        <div id="result" class="result"></div>
+        <div id="error" class="error"></div>
+        <div id="loading" class="loading" style="display: none;">Deposit Loading...</div>
+    </div>
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.5.0/web3.min.js"
+        integrity="sha512-FhAl50BpK3gf9K//lbAWek9EEQEtGQyyXZNc1fuwcC2tVf2cskiJBcumXY0zJksYtms6S5cqubp1MNfUYTkO2A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        // Event listener for deposit button click
+        document.getElementById('depositButton').addEventListener('click', async () => {
+            // Disable the button to prevent multiple clicks
+            document.getElementById('depositButton').disabled = true;
+            const solanaAddress = document.getElementById('solanaAddress').value;
+            const amount = parseFloat(document.getElementById('amount').value); // Get the amount in ether
+            const fee = document.getElementById('fee').value;
+            // Clear previous error and result messages
+            document.getElementById('error').innerText = '';
+            document.getElementById('result').innerText = '';
+            // Validate inputs
+            if (!solanaAddress || !amount || !fee) {
+                document.getElementById('error').innerText = 'Please fill in all fields.';
+                // Re-enable the button
+                document.getElementById('depositButton').disabled = false;
+                return;
+            }
+            // Display loading indicator
+            document.getElementById('loading').style.display = 'block';
+            // Process deposit
+            const abi = [{
+                "constant": false,
+                "inputs": [{
+                    "name": "",
+                    "type": "bytes32"
+                }, {
+                    "name": "",
+                    "type": "uint256"
+                }, {
+                    "name": "",
+                    "type": "uint256"
+                }],
+                "name": "deposit",
+                "outputs": [],
+                "payable": true,
+                "stateMutability": "payable",
+                "type": "function"
+            }];
+            const etherBridgeContractAddress = "0x7C9e161ebe55000a3220F972058Fb83273653a6e"; // EtherBridge contract address
+            const hexSolanaAddress = '0x' + decodeBase58(solanaAddress);
+            const provider = window.ethereum;
+            const web3 = new Web3(provider);
+            const contract = new web3.eth.Contract(abi, etherBridgeContractAddress);
+            try {
+                // Request account access
+                await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+                // Get the connected account
+                const accounts = await web3.eth.getAccounts();
+                const from = accounts[0];
+                const amountWei = web3.utils.toWei(amount.toString(), 'ether'); // Convert ether to Wei
+                const feeWei = web3.utils.toWei(fee, 'gwei');
+                const totalWei = (BigInt(amountWei) + BigInt(feeWei)).toString();
+                // Send transaction
+                const tx = await contract.methods.deposit(hexSolanaAddress, amountWei, feeWei).send({
+                    from: from,
+                    value: totalWei
+                });
+                document.getElementById('result').innerHTML = `
+                       
+         								<p>Transaction successful! Transaction hash: 
+         									<a href="https://sepolia.etherscan.io/tx/${tx.transactionHash}" target="_blank">${tx.transactionHash}</a>
+         								</p>
+                   `;
+            } catch (error) {
+                document.getElementById('error').innerText = `Transaction failed: ${error.message}`;
+            } finally {
+                // Hide loading indicator
+                document.getElementById('loading').style.display = 'none';
+                // Re-enable the button
+                document.getElementById('depositButton').disabled = false;
+            }
+        });
+        // Function to decode base58 string
+        function decodeBase58(base58String) {
+            const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+            let decoded = BigInt(0);
+            for (let i = 0; i < base58String.length; i++) {
+                decoded *= BigInt(58);
+                decoded += BigInt(ALPHABET.indexOf(base58String[i]));
+            }
+            let hexString = decoded.toString(16);
+            if (hexString.length % 2 !== 0) {
+                hexString = '0' + hexString;
+            }
+            return hexString;
+        }
+    </script>
+</body>
+
+</html>
