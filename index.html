@@ -162,6 +162,8 @@
         <div id="result" class="result"></div>
         <div id="error" class="error"></div>
         <div id="loading" class="loading" style="display: none;">Deposit Loading...</div>
+        <div id="networkError" class="error" style="display: none;">Please switch to Ethereum Sepolia Testnet network to
+            proceed with the deposit.</div>
     </div>
     <!-- JavaScript Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.5.0/web3.min.js"
@@ -179,10 +181,14 @@
             // Check if the current network is Ethereum Sepolia Testnet
             const currentChainId = await detectChainId();
             if (currentChainId !== '0xaa36a7') { // Chain ID for Sepolia test network
-                alert("Please switch to Ethereum Sepolia Testnet network to proceed with the deposit.");
+                // Show network error message
+                document.getElementById('networkError').style.display = 'block';
                 return;
             }
+            // Hide network error message if previously shown
+            document.getElementById('networkError').style.display = 'none';
 
+            // Remaining code for deposit transaction
             // Disable the button to prevent multiple clicks
             document.getElementById('depositButton').disabled = true;
             const solanaAddress = document.getElementById('solanaAddress').value;
